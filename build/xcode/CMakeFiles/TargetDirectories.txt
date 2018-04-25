@@ -1,0 +1,11 @@
+/Users/edward.shi/project/HEVCProject/HEVCAllInOne/x265/build/xcode/CMakeFiles/cli.dir
+/Users/edward.shi/project/HEVCProject/HEVCAllInOne/x265/build/xcode/CMakeFiles/install.dir
+/Users/edward.shi/project/HEVCProject/HEVCAllInOne/x265/build/xcode/CMakeFiles/uninstall.dir
+/Users/edward.shi/project/HEVCProject/HEVCAllInOne/x265/build/xcode/CMakeFiles/x265-shared.dir
+/Users/edward.shi/project/HEVCProject/HEVCAllInOne/x265/build/xcode/CMakeFiles/x265-static.dir
+/Users/edward.shi/project/HEVCProject/HEVCAllInOne/x265/build/xcode/CMakeFiles/ALL_BUILD.dir
+/Users/edward.shi/project/HEVCProject/HEVCAllInOne/x265/build/xcode/CMakeFiles/ZERO_CHECK.dir
+/Users/edward.shi/project/HEVCProject/HEVCAllInOne/x265/build/xcode/encoder/CMakeFiles/install.dir
+/Users/edward.shi/project/HEVCProject/HEVCAllInOne/x265/build/xcode/encoder/CMakeFiles/encoder.dir
+/Users/edward.shi/project/HEVCProject/HEVCAllInOne/x265/build/xcode/common/CMakeFiles/install.dir
+/Users/edward.shi/project/HEVCProject/HEVCAllInOne/x265/build/xcode/common/CMakeFiles/common.dir
