@@ -1063,6 +1063,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         }
 
         /* Use the frame types from the first pass, if available */
+        //x265_log(NULL, X265_LOG_FULL, "  inFrame->m_poc=%d, m_param->rc.bStatRead=%d  pic_in->sliceType=%d\n", inFrame->m_poc, m_param->rc.bStatRead, pic_in->sliceType);
         int sliceType = (m_param->rc.bStatRead) ? m_rateControl->rateControlSliceType(inFrame->m_poc) : pic_in->sliceType;
 
         /* In analysisSave mode, x265_analysis_data is allocated in pic_in and inFrame points to this */
@@ -1073,6 +1074,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             readAnalysisFile(&inFrame->m_analysisData, inFrame->m_poc, pic_in);
             inFrame->m_poc = inFrame->m_analysisData.poc;
             sliceType = inFrame->m_analysisData.sliceType;
+            //x265_log(NULL, X265_LOG_FULL, "  inFrame->m_poc=%d, inFrame->m_analysisData.sliceType=%d  sliceType=%d\n", inFrame->m_poc, inFrame->m_analysisData.sliceType, sliceType);
+
             inFrame->m_lowres.bScenecut = !!inFrame->m_analysisData.bScenecut;
             inFrame->m_lowres.satdCost = inFrame->m_analysisData.satdCost;
             if (m_param->bDisableLookahead)
@@ -1120,6 +1123,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         if (m_reconfigureRc)
             inFrame->m_reconfigureRc = true;
 
+        //x265_log(NULL, X265_LOG_FULL, "  inFrame->m_poc=%d, addPicture()  inFrame->m_analysisData.sliceType=%d, sliceType=%d\n", inFrame->m_poc, inFrame->m_analysisData.sliceType, sliceType);
         m_lookahead->addPicture(*inFrame, sliceType);
         m_numDelayedPic++;
     }

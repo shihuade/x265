@@ -768,6 +768,7 @@ void Lookahead::addPicture(Frame& curFrame, int sliceType)
     else
     {
         checkLookaheadQueue(m_inputCount);
+        //x265_log(NULL, X265_LOG_FULL, "addPicture() sliceType=%d \n", sliceType);
         curFrame.m_lowres.sliceType = sliceType;
         addPicture(curFrame);
     }

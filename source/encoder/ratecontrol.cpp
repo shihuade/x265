@@ -1408,6 +1408,7 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
 
 void RateControl::accumPQpUpdate()
 {
+    //x265_log(NULL, X265_LOG_FULL, "     --accumPQpUpdate, poc=%d, m_sliceType=%d m_accumPQp=%f m_accumPNorm=%f\n", m_curSlice->m_poc, m_sliceType, m_accumPQp, m_accumPNorm);
     m_accumPQp   *= .95;
     m_accumPNorm *= .95;
     m_accumPNorm += 1;
@@ -1893,6 +1894,7 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
             rce->mvBits = 0;
             rce->sliceType = m_sliceType;
 
+            printf(" --EstimateQScale() poc=%3d  m_curSlice->m_sliceType=%d, rce->poc=%3d, rce->sliceType=%d, encOrder=%3d m_wantedBitsWindow=%5f\n", m_curSlice->m_poc, m_curSlice->m_sliceType, rce->poc, rce->sliceType, rce->encodeOrder, m_wantedBitsWindow);
             if (m_param->rc.rateControlMode == X265_RC_CRF)
             {
                 q = getQScale(rce, m_rateFactorConstant);
@@ -2014,6 +2016,9 @@ void RateControl::rateControlUpdateStats(RateControlEntry* rce)
 {
     if (!m_param->rc.bStatWrite && !m_param->rc.bStatRead)
     {
+        //printf("00-ratecontrolUpdateStats()--poc=%2d  slcType=%d,  rce->sliceType=%d, rce->poc=%2d, rce->encodeOrder=%2d\n", m_curSlice->m_poc, m_curSlice->m_sliceType, rce->sliceType, rce->poc, rce->encodeOrder);
+
+        //printf("0-ratecontrolUpdateStats()--poc=%2d m_partialResidualCost=%d, m_partialResidualFrames=%2d rce->rowTotalBits=%lld, rce->amortizeFraction=%f, slcType=%d,  rce->poc=%2d\n", m_curSlice->m_poc, m_partialResidualCost, m_partialResidualFrames, rce->rowTotalBits, rce->amortizeFraction, rce->sliceType, rce->poc);
         if (rce->sliceType == I_SLICE)
         {
             /* previous I still had a residual; roll it into the new loan */
@@ -2037,10 +2042,12 @@ void RateControl::rateControlUpdateStats(RateControlEntry* rce)
             m_partialResidualFrames = X265_MIN((int)rce->amortizeFrames, m_param->keyframeMax);
             m_partialResidualCost = (int)((rce->rowTotalBits * rce->amortizeFraction) / m_partialResidualFrames);
             rce->rowTotalBits -= m_partialResidualCost * m_partialResidualFrames;
+            //printf("1-ratecontrolUpdateStats()--poc=%2d m_partialResidualCost=%d, m_partialResidualFrames=%2d rce->rowTotalBits=%lld, rce->amortizeFraction=%f, slcType=%d,  rce->poc=%2d\n", m_curSlice->m_poc, m_partialResidualCost, m_partialResidualFrames, rce->rowTotalBits, rce->amortizeFraction, rce->sliceType, rce->poc);
         }
         else if (m_partialResidualFrames)
         {
              rce->rowTotalBits += m_partialResidualCost;
+            //printf("2-ratecontrolUpdateStats()--poc=%2d m_partialResidualCost=%d, m_partialResidualFrames=%2d rce->rowTotalBits=%lld, rce->amortizeFraction=%f, slcType=%d,  rce->poc=%2d\n", m_curSlice->m_poc, m_partialResidualCost, m_partialResidualFrames, rce->rowTotalBits, rce->amortizeFraction, rce->sliceType, rce->poc);
              m_partialResidualFrames--;
         }
     }
@@ -2051,6 +2058,7 @@ void RateControl::rateControlUpdateStats(RateControlEntry* rce)
 
     m_cplxrSum += rce->rowCplxrSum;
     m_totalBits += rce->rowTotalBits;
+    //printf("3-ratecontrolUpdateStats()--poc=%2d m_partialResidualCost=%d, m_partialResidualFrames=%2d rce->rowTotalBits=%lld, rce->amortizeFraction=%f, slcType=%d,  rce->poc=%2d, m_totalBits=%lld\n", m_curSlice->m_poc, m_partialResidualCost, m_partialResidualFrames, rce->rowTotalBits, rce->amortizeFraction, rce->sliceType, rce->poc, m_totalBits);
 
     /* do not allow the next frame to enter rateControlStart() until this
      * frame has updated its mid-frame statistics */
@@ -2700,16 +2708,25 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
             if (rce->sliceType == I_SLICE)
             {
                 /* previous I still had a residual; roll it into the new loan */
+                //printf(" 1-rateControlEnd(),  poc=,%3d, rec-sliceType=,%d, amortizeFrames=,%4.2f,  m_residualFrames=,%3d, amortizeFraction=,%3.2f, m_residualCost=,%4d, bits=,%lld, factor=,%f \n", m_curSlice->m_poc, rce->sliceType, rce->amortizeFrames, m_residualFrames, rce->amortizeFraction, m_residualCost, bits, (rce->amortizeFraction /m_residualFrames));
+
                 if (m_residualFrames)
                     bits += m_residualCost * m_residualFrames;
+                //printf(" 2-rateControlEnd(),  poc=,%3d, rec-sliceType=,%d, amortizeFrames=,%4.2f,  m_residualFrames=,%3d, amortizeFraction=,%3.2f, m_residualCost=,%4d, bits=,%lld, factor=,%f \n", m_curSlice->m_poc, rce->sliceType, rce->amortizeFrames, m_residualFrames, rce->amortizeFraction, m_residualCost, bits, (rce->amortizeFraction /m_residualFrames));
+
                 m_residualFrames = X265_MIN((int)rce->amortizeFrames, m_param->keyframeMax);
                 m_residualCost = (int)((bits * rce->amortizeFraction) / m_residualFrames);
                 bits -= m_residualCost * m_residualFrames;
+                //printf(" 3-rateControlEnd(),  poc=,%3d, rec-sliceType=,%d, amortizeFrames=,%4.2f,  m_residualFrames=,%3d, amortizeFraction=,%3.2f, m_residualCost=,%4d, bits=,%lld, factor=,%f \n\n", m_curSlice->m_poc, rce->sliceType, rce->amortizeFrames, m_residualFrames, rce->amortizeFraction, m_residualCost, bits, (rce->amortizeFraction /m_residualFrames));
+
+
             }
             else if (m_residualFrames)
             {
+                //printf(" 4-rateControlEnd()  poc=%3d, rec-sliceType= %d, amortizeFrames=%4.2f  m_residualFrames=%3d, amortizeFraction=%3.2f, m_residualCost=%4d bits=%lld factor=%f \n", m_curSlice->m_poc, rce->sliceType, rce->amortizeFrames, m_residualFrames, rce->amortizeFraction, m_residualCost, bits, (rce->amortizeFraction /m_residualFrames));
                 bits += m_residualCost;
                 m_residualFrames--;
+                //printf(" 5-rateControlEnd()  poc=%3d, rec-sliceType= %d, amortizeFrames=%4.2f  m_residualFrames=%3d, amortizeFraction=%3.2f, m_residualCost=%4d bits=%lld factor=%f \n", m_curSlice->m_poc, rce->sliceType, rce->amortizeFrames, m_residualFrames, rce->amortizeFraction, m_residualCost, bits, (rce->amortizeFraction /m_residualFrames));
             }
         }
         if (rce->sliceType != B_SLICE)
@@ -2727,6 +2744,9 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
         m_wantedBitsWindow += m_frameDuration * m_bitrate;
         m_totalBits += bits - rce->rowTotalBits;
         m_encodedBits += actualBits;
+        //printf(" 6-rateControlEnd()  poc=%3d, m_sliceType=%d, rec-sliceType= %d, rce->encodeOrder=%2d,  rce->poc=%2d\n\n", m_curSlice->m_poc, m_curSlice->m_sliceType, rce->sliceType, rce->encodeOrder, rce->poc);
+        
+        
         int pos = m_sliderPos - m_param->frameNumThreads;
         if (pos >= 0)
             m_encodedBitsWindow[pos % s_slidingWindowFrames] = actualBits;

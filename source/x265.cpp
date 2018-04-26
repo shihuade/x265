@@ -678,6 +678,7 @@ int main(int argc, char **argv)
 
         if (pic_in)
         {
+            //x265_log(NULL, X265_LOG_FULL, " poc=%d  sliceType=%d\n", pic_in->poc, pic_in->sliceType);
             if (pic_in->bitDepth > param->internalBitDepth && cliopt.bDither)
             {
                 x265_dither_image(pic_in, cliopt.input->getWidth(), cliopt.input->getHeight(), errorBuf, param->internalBitDepth);
@@ -712,8 +713,10 @@ int main(int argc, char **argv)
                     pts_queue->pop();
             }
         }
-
-        cliopt.printStatus(outFrameCount);
+//        if(pic_in != NULL) {
+//            x265_log(NULL, X265_LOG_INFO, "  --loop1, poc=%d numEncoded=%d inFrameCount=%d, outFrameCount=%d\n\n", pic_in->poc, numEncoded, inFrameCount, outFrameCount);
+//        cliopt.printStatus(outFrameCount);
+//        }
     }
 
     /* Flush the encoder */
@@ -744,6 +747,7 @@ int main(int argc, char **argv)
         }
 
         cliopt.printStatus(outFrameCount);
+       // x265_log(NULL, X265_LOG_INFO, "  ==loop2, numEncoded=%d inFrameCount=%d, outFrameCount=%d\n\n", numEncoded, inFrameCount, outFrameCount);
 
         if (!numEncoded)
             break;

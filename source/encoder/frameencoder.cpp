@@ -123,11 +123,16 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     uint32_t sliceGroupSizeAccu = (m_numRows << 8) / m_param->maxSlices;    
     uint32_t rowSum = sliceGroupSizeAccu;
     uint32_t sidx = 0;
+    
+    printf(" initSlice()--m_numRows=%2d, maxSlices=%2d, m_sliceGroupSize=%2d, sliceGroupSizeAccu=%2d\n", m_numRows, m_param->maxSlices, m_sliceGroupSize, sliceGroupSizeAccu);
+
     for (uint32_t i = 0; i < m_numRows; i++)
     {
         const uint32_t rowRange = (rowSum >> 8);
+        printf(" initSlice()--m_numRows=%2d,  i=%2d, rowSum=%2d, rowRange=%2d\n", m_numRows,  i, rowSum, rowRange);
         if ((i >= rowRange) & (sidx != m_param->maxSlices - 1))
         {
+            printf(" initSlice()--m_numRows=%2d,  i=%2d, rowSum=%2d, rowRange=%2d m_sliceBaseRow[%2d]=%2d\n", m_numRows,  i, rowSum, rowRange, sidx +1, i);
             rowSum += sliceGroupSizeAccu;
             m_sliceBaseRow[++sidx] = i;
         }        
@@ -1344,7 +1349,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     Entropy& rowCoder = m_param->bEnableWavefront ? curRow.rowGoOnCoder : m_rows[0].rowGoOnCoder;
     FrameData& curEncData = *m_frame->m_encData;
     Slice *slice = curEncData.m_slice;
-
+    
     const uint32_t numCols = m_numCols;
     const uint32_t lineStartCUAddr = row * numCols;
     bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
@@ -1356,6 +1361,8 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     const uint32_t bLastRowInSlice = ((row == m_numRows - 1) || (m_rows[row + 1].sliceId != curRow.sliceId)) ? 1 : 0;
     const uint32_t endRowInSlicePlus1 = m_sliceBaseRow[sliceId + 1];
     const uint32_t rowInSlice = row - m_sliceBaseRow[sliceId];
+
+    //printf("   ************processRowEncoder() poc =%3d, thread tld=%d, intRow=%2d rowInSlice=%2d bFirstRowInSlice=%2d, bLastRowInSlice=%2d\n", m_frame->m_poc, &tld, intRow, rowInSlice, bFirstRowInSlice, bLastRowInSlice);
 
     // Load SBAC coder context from previous row and initialize row state.
     if (bFirstRowInSlice && !curRow.completed)        
@@ -1840,9 +1847,13 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             if (ATOMIC_INC(&m_sliceCnt) == (int)m_param->maxSlices)
             {
                 m_rce.rowTotalBits = 0;
-                for (uint32_t i = 0; i < m_param->maxSlices; i++)
+                for (uint32_t i = 0; i < m_param->maxSlices; i++) {
                     m_rce.rowTotalBits += m_rowSliceTotalBits[i];
+                    //printf(" processrowEncoder():: poc=%2d m_sliceCnt=%d m_rowSliceTotalBits[%d]=%4lld, m_rce.rowTotalBits=%5lld\n", m_frame->m_poc, m_sliceCnt, i, m_rowSliceTotalBits[i], m_rce.rowTotalBits);
+                }
+                //printf("\n");
                 m_top->m_rateControl->rateControlUpdateStats(&m_rce);
+                
             }
         }
     }
