@@ -67,7 +67,7 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--input-res 1280x720 --fps 30 -f 20"
+            argument = "--input-res 1280x720 --fps 30   --keyint  40  --frames 1000 --slice 4"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
@@ -79,7 +79,7 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--bitrate 900"
+            argument = "--bitrate 3000"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
