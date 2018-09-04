@@ -227,6 +227,8 @@ public:
     uint32_t*               m_trainingCount;
     int32_t                 m_startPoint;
     Lock                    m_dynamicRefineLock;
+    
+    FILE* m_pPTSDTSFile;
 
     Encoder();
     ~Encoder()
@@ -235,6 +237,10 @@ public:
         if (m_prevTonemapPayload.payload != NULL)
             X265_FREE(m_prevTonemapPayload.payload);
 #endif
+        if(m_pPTSDTSFile) {
+            fclose(m_pPTSDTSFile);
+            m_pPTSDTSFile = NULL;
+        }
     };
 
     void create();

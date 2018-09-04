@@ -97,6 +97,8 @@ Encoder::Encoder()
 
     m_prevTonemapPayload.payload = NULL;
     m_startPoint = 0;
+    m_pPTSDTSFile = NULL;
+    m_pPTSDTSFile = fopen("x265-pts-dts-info.txt", "w+");
 }
 inline char *strcatFilename(const char *input, const char *suffix)
 {
@@ -1166,6 +1168,9 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 
                 pic_out->pts = outFrame->m_pts;
                 pic_out->dts = outFrame->m_dts;
+                if(m_pPTSDTSFile) {
+                    fprintf(m_pPTSDTSFile, " encode: poc=%3d, pts=%3lld, dts=%3lld\n", pic_out->poc, pic_out->pts, pic_out->dts);
+                }
                 pic_out->reorderedPts = outFrame->m_reorderedPts;
                 pic_out->sliceType = outFrame->m_lowres.sliceType;
                 pic_out->planes[0] = recpic->m_picOrg[0];
@@ -1200,6 +1205,10 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                         pic_out->analysisData.numCuInHeight = outFrame->m_analysisData.numCuInHeight;
                         pic_out->analysisData.lookahead.dts = outFrame->m_dts;
                         pic_out->analysisData.lookahead.reorderedPts = outFrame->m_reorderedPts;
+                        if(m_pPTSDTSFile) {
+                            fprintf(m_pPTSDTSFile, " encode: bDisableLookahead:: poc=%3d, pts=%3lld, dts=%3lld, outFrame->m_reorderedPts=%3lld\n",
+                                    pic_out->poc, pic_out->pts, pic_out->dts, outFrame->m_reorderedPts);
+                        }
                         pic_out->analysisData.satdCost *= factor;
                         pic_out->analysisData.lookahead.keyframe = outFrame->m_lowres.bKeyframe;
                         pic_out->analysisData.lookahead.lastMiniGopBFrame = outFrame->m_lowres.bLastMiniGopBFrame;
@@ -1393,6 +1402,10 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             {
                 frameEnc->m_dts = frameEnc->m_analysisData.lookahead.dts;
                 frameEnc->m_reorderedPts = frameEnc->m_analysisData.lookahead.reorderedPts;
+                if(m_pPTSDTSFile) {
+                    fprintf(m_pPTSDTSFile, " encode: analysisLoad && bDisableLookahead:: poc=%3d, pts=%3lld, dts=%3lld, outFrame->m_reorderedPts=%3lld\n",
+                            pic_out->poc, pic_out->pts, pic_out->dts, outFrame->m_reorderedPts);
+                }
                 if (m_rateControl->m_isVbv)
                 {
                     for (uint32_t index = 0; index < frameEnc->m_analysisData.numCuInHeight; index++)
@@ -1468,9 +1481,19 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                         ? prevReorderedPts[(m_encodedFrameNum - m_bframeDelay) % m_bframeDelay]
                         : frameEnc->m_reorderedPts - m_bframeDelayTime;
                     prevReorderedPts[m_encodedFrameNum % m_bframeDelay] = frameEnc->m_reorderedPts;
+                    
+                    if(m_pPTSDTSFile) {
+                        fprintf(m_pPTSDTSFile, " encode: !analysisLoad || !bDisableLookahead ==>m_bframeDelay:: poc=%3d, pts=%3lld, dts=%3lld, m_reorderedPts=%3lld, m_encodedFrameNum=%3d, m_bframeDelay=%3d,  prevReorderedPts[m_encodedFrameNum % m_bframeDelay]=%3lld\n",
+                                frameEnc->m_poc, frameEnc->m_pts, frameEnc->m_dts, frameEnc->m_reorderedPts, m_encodedFrameNum, m_bframeDelay,  prevReorderedPts[m_encodedFrameNum % m_bframeDelay]);
+                    }
                 }
-                else
+                else {
                     frameEnc->m_dts = frameEnc->m_reorderedPts;
+                    if(m_pPTSDTSFile) {
+                        fprintf(m_pPTSDTSFile, " encode: !analysisLoad || !bDisableLookahead !m_bframeDelay:: poc=%3d, pts=%3lld, dts=%3lld, m_reorderedPts=%3lld, m_encodedFrameNum=%3d, m_bframeDelay=%3d\n",
+                                frameEnc->m_poc, frameEnc->m_pts, frameEnc->m_dts, frameEnc->m_reorderedPts, m_encodedFrameNum, m_bframeDelay);
+                    }
+                }
             }
 
             /* Allocate analysis data before encode in save mode. This is allocated in frameEnc */
